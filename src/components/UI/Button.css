@@ -1,0 +1,274 @@
+/* Enhanced Button Component */
+.btn-enhanced {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  font-weight: 600;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  background: none;
+  outline: none;
+  user-select: none;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.btn-enhanced:active {
+  transform: scale(0.98);
+}
+
+/* Button Content */
+.btn-enhanced__content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  position: relative;
+  z-index: 1;
+}
+
+.btn-enhanced__text {
+  font-weight: inherit;
+}
+
+.btn-enhanced__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-enhanced__icon--left {
+  margin-right: 4px;
+}
+
+.btn-enhanced__icon--right {
+  margin-left: 4px;
+}
+
+/* Loading State */
+.btn-enhanced__spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 8px;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-top: 2px solid transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Ripple Effect */
+.btn-enhanced__ripple {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.btn-enhanced:active .btn-enhanced__ripple::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  animation: ripple 0.6s linear;
+}
+
+@keyframes ripple {
+  to {
+    width: 300px;
+    height: 300px;
+    opacity: 0;
+  }
+}
+
+/* Size Variants */
+.btn-enhanced--small {
+  padding: 8px 16px;
+  font-size: 14px;
+  min-height: 36px;
+}
+
+.btn-enhanced--medium {
+  padding: 12px 24px;
+  font-size: 16px;
+  min-height: 44px;
+}
+
+.btn-enhanced--large {
+  padding: 16px 32px;
+  font-size: 18px;
+  min-height: 52px;
+}
+
+.btn-enhanced--extra-large {
+  padding: 20px 40px;
+  font-size: 20px;
+  min-height: 60px;
+}
+
+/* Full Width */
+.btn-enhanced--full-width {
+  width: 100%;
+}
+
+/* Color Variants */
+.btn-enhanced--primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 
+    0 4px 14px rgba(102, 126, 234, 0.3),
+    0 1px 0 rgba(255, 255, 255, 0.2) inset;
+}
+
+.btn-enhanced--primary:hover {
+  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 25px rgba(102, 126, 234, 0.4),
+    0 1px 0 rgba(255, 255, 255, 0.3) inset;
+}
+
+.btn-enhanced--secondary {
+  background: rgba(255, 255, 255, 0.9);
+  color: #667eea;
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  box-shadow: 
+    0 4px 14px rgba(0, 0, 0, 0.1),
+    0 1px 0 rgba(255, 255, 255, 0.8) inset;
+}
+
+.btn-enhanced--secondary:hover {
+  background: rgba(255, 255, 255, 1);
+  border-color: rgba(102, 126, 234, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 25px rgba(0, 0, 0, 0.15),
+    0 1px 0 rgba(255, 255, 255, 1) inset;
+}
+
+.btn-enhanced--ghost {
+  background: transparent;
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.btn-enhanced--ghost:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+}
+
+.btn-enhanced--success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  box-shadow: 
+    0 4px 14px rgba(16, 185, 129, 0.3),
+    0 1px 0 rgba(255, 255, 255, 0.2) inset;
+}
+
+.btn-enhanced--success:hover {
+  background: linear-gradient(135deg, #0d9f73 0%, #047857 100%);
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 25px rgba(16, 185, 129, 0.4),
+    0 1px 0 rgba(255, 255, 255, 0.3) inset;
+}
+
+.btn-enhanced--warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  box-shadow: 
+    0 4px 14px rgba(245, 158, 11, 0.3),
+    0 1px 0 rgba(255, 255, 255, 0.2) inset;
+}
+
+.btn-enhanced--warning:hover {
+  background: linear-gradient(135deg, #e0890a 0%, #c2670a 100%);
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 25px rgba(245, 158, 11, 0.4),
+    0 1px 0 rgba(255, 255, 255, 0.3) inset;
+}
+
+.btn-enhanced--danger {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  box-shadow: 
+    0 4px 14px rgba(239, 68, 68, 0.3),
+    0 1px 0 rgba(255, 255, 255, 0.2) inset;
+}
+
+.btn-enhanced--danger:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 25px rgba(239, 68, 68, 0.4),
+    0 1px 0 rgba(255, 255, 255, 0.3) inset;
+}
+
+/* Disabled State */
+.btn-enhanced--disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.btn-enhanced--disabled:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Loading State */
+.btn-enhanced--loading {
+  pointer-events: none;
+}
+
+.btn-enhanced--loading .btn-enhanced__text {
+  opacity: 0.7;
+}
+
+/* Focus States */
+.btn-enhanced:focus-visible {
+  outline: 2px solid rgba(102, 126, 234, 0.5);
+  outline-offset: 2px;
+}
+
+/* Glass Morphism Variant */
+.btn-enhanced--glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.btn-enhanced--glass:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
