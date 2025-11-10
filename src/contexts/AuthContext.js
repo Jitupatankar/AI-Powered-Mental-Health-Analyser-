@@ -1,29 +1,26 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { createContext, useContext, useState, useEffect } from "react";
+import api from "../api/axios";
 
 const AuthContext = createContext();
-const API_URL = 'http://localhost:5000/api';
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };
 
 // Axios interceptor to add token to requests
-axios.interceptors.request.use(
+api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('psyche_compass_auth_token');
+    const token = localStorage.getItem("psyche_compass_auth_token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 export const AuthProvider = ({ children }) => {
@@ -34,18 +31,18 @@ export const AuthProvider = ({ children }) => {
   // Check if user is already logged in on app start
   useEffect(() => {
     const checkAuthStatus = async () => {
-      const authToken = localStorage.getItem('psyche_compass_auth_token');
-      
+      const authToken = localStorage.getItem("psyche_compass_auth_token");
+
       if (authToken) {
         try {
           // Verify token with backend
-          const response = await axios.get(`${API_URL}/auth/me`);
+          const response = await api.get("/api/auth/me");
           if (response.data.user) {
             setUser(response.data.user);
             setIsAuthenticated(true);
           }
         } catch (error) {
-          console.error('Token verification failed:', error);
+          console.error("Token verification failed:", error);
           logout();
         }
       }
@@ -57,74 +54,75 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await axios.post(`${API_URL}/auth/login`, {
-        email,
-        password
-      });
+      const response = await api.post("/api/auth/login", { email, password });
 
       if (response.data.success) {
         const { token, user } = response.data;
-        
+
         // Save token to localStorage
-        localStorage.setItem('psyche_compass_auth_token', token);
-        localStorage.setItem('psyche_compass_user', JSON.stringify(user));
-        
+        localStorage.setItem("psyche_compass_auth_token", token);
+        localStorage.setItem("psyche_compass_user", JSON.stringify(user));
+
         setUser(user);
         setIsAuthenticated(true);
-        
+
         return { success: true, user };
       } else {
-        return { 
-          success: false, 
-          error: response.data.error || 'Login failed'
+        return {
+          success: false,
+          error: response.data.error || "Login failed",
         };
       }
     } catch (error) {
-      console.error('Login error:', error);
-      return { 
-        success: false, 
-        error: error.response?.data?.error || 'Login failed. Please check your connection and try again.'
+      console.error("Login error:", error);
+      return {
+        success: false,
+        error:
+          error.response?.data?.error ||
+          "Login failed. Please check your connection and try again.",
       };
     }
   };
 
   const register = async (name, email, password) => {
     try {
-      const response = await axios.post(`${API_URL}/auth/register`, {
+      const response = await api.post("/api/auth/register", {
         name,
         email,
-        password
+        password,
       });
 
       if (response.data.success) {
         const { token, user } = response.data;
-        
+
         // Save token to localStorage
-        localStorage.setItem('psyche_compass_auth_token', token);
-        localStorage.setItem('psyche_compass_user', JSON.stringify(user));
-        
+        localStorage.setItem("psyche_compass_auth_token", token);
+        localStorage.setItem("psyche_compass_user", JSON.stringify(user));
+
         setUser(user);
         setIsAuthenticated(true);
-        
+
         return { success: true, user };
       } else {
-        return { 
-          success: false, 
-          error: response.data.error || 'Registration failed'
+        return {
+          success: false,
+          error: response.data.error || "Registration failed",
         };
       }
     } catch (error) {
-      console.error('Registration error:', error);
-      return { 
-        success: false, 
-        error: error.response?.data?.error || 'Registration failed. Please try again.'
+      console.error("Registration error:", error);
+      return {
+        success: false,
+        error:
+          error.response?.data?.error ||
+          "Registration failed. Please try again.",
       };
     }
   };
 
   const logout = () => {
-    localStorage.removeItem('psyche_compass_user');
-    localStorage.removeItem('psyche_compass_auth_token');
+    localStorage.removeItem("psyche_compass_user");
+    localStorage.removeItem("psyche_compass_auth_token");
     setUser(null);
     setIsAuthenticated(false);
   };
@@ -135,12 +133,10 @@ export const AuthProvider = ({ children }) => {
     loading,
     login,
     register,
-    logout
+    logout,
   };
 
   return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
   );
 };
