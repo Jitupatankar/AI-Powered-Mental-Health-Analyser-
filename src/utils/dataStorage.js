@@ -1,158 +1,137 @@
 // Data storage utility using API calls to backend
-import axios from 'axios';
+import api from "../api/axios";
 
-const API_URL = 'http://localhost:5000/api';
-
-// Helper function to get auth token
+// Helper function to get auth token headers
 const getAuthHeaders = () => {
-  const token = localStorage.getItem('psyche_compass_auth_token');
+  const token = localStorage.getItem("psyche_compass_auth_token");
   return {
     headers: {
-      Authorization: `Bearer ${token}`
-    }
+      Authorization: `Bearer ${token}`,
+    },
   };
 };
 
-// Mood Entry Functions
+// =============== Mood Entry Functions ===============
+
 export const saveMoodEntry = async (moodData) => {
   try {
-    const response = await axios.post(
-      `${API_URL}/mood`,
-      moodData,
-      getAuthHeaders()
-    );
-    
+    const response = await api.post("/api/mood", moodData, getAuthHeaders());
     if (response.data.success) {
       return response.data.moodEntry;
     }
     return null;
   } catch (error) {
-    console.error('Error saving mood entry:', error);
+    console.error("Error saving mood entry:", error);
     return null;
   }
 };
 
 export const getMoodEntries = async () => {
   try {
-    const response = await axios.get(
-      `${API_URL}/mood`,
-      getAuthHeaders()
-    );
-    
+    const response = await api.get("/api/mood", getAuthHeaders());
     if (response.data.success) {
       return response.data.moodEntries;
     }
     return [];
   } catch (error) {
-    console.error('Error getting mood entries:', error);
+    console.error("Error getting mood entries:", error);
     return [];
   }
 };
 
 export const getRecentMoodEntries = async (limit = 5) => {
   try {
-    const response = await axios.get(
-      `${API_URL}/mood/recent/${limit}`,
-      getAuthHeaders()
-    );
-    
+    const response = await api.get(`/api/mood/recent/${limit}`, getAuthHeaders());
     if (response.data.success) {
       return response.data.moodEntries;
     }
     return [];
   } catch (error) {
-    console.error('Error getting recent mood entries:', error);
+    console.error("Error getting recent mood entries:", error);
     return [];
   }
 };
 
-// Assessment Functions
+// =============== Assessment Functions ===============
+
 export const saveAssessment = async (assessmentType, responses, scores = null) => {
   try {
-    const response = await axios.post(
-      `${API_URL}/assessment`,
-      {
-        type: assessmentType,
-        responses,
-        scores
-      },
+    const response = await api.post(
+      "/api/assessment",
+      { type: assessmentType, responses, scores },
       getAuthHeaders()
     );
-    
     if (response.data.success) {
       return response.data.assessment;
     }
     return null;
   } catch (error) {
-    console.error('Error saving assessment:', error);
+    console.error("Error saving assessment:", error);
     return null;
   }
 };
 
 export const getAssessments = async () => {
   try {
-    const response = await axios.get(
-      `${API_URL}/assessment`,
-      getAuthHeaders()
-    );
-    
+    const response = await api.get("/api/assessment", getAuthHeaders());
     if (response.data.success) {
       return response.data.assessments;
     }
     return [];
   } catch (error) {
-    console.error('Error getting assessments:', error);
+    console.error("Error getting assessments:", error);
     return [];
   }
 };
 
 export const getAssessmentsByType = async (type) => {
   try {
-    const response = await axios.get(
-      `${API_URL}/assessment/type/${type}`,
-      getAuthHeaders()
-    );
-    
+    const response = await api.get(`/api/assessment/type/${type}`, getAuthHeaders());
     if (response.data.success) {
       return response.data.assessments;
     }
     return [];
   } catch (error) {
-    console.error('Error getting assessments by type:', error);
+    console.error("Error getting assessments by type:", error);
     return [];
   }
 };
 
-// Dashboard Statistics Functions
+// =============== Dashboard Stats ===============
+
 export const calculateDashboardStats = async () => {
   try {
-    const [statsResponse, moodEntriesResponse, assessmentsResponse] = await Promise.all([
-      axios.get(`${API_URL}/user/stats`, getAuthHeaders()),
-      axios.get(`${API_URL}/mood/recent/3`, getAuthHeaders()),
-      axios.get(`${API_URL}/assessment`, getAuthHeaders())
+    const [statsResponse, moodsResponse, assessmentsResponse] = await Promise.all([
+      api.get("/api/user/stats", getAuthHeaders()),
+      api.get("/api/mood/recent/3", getAuthHeaders()),
+      api.get("/api/assessment", getAuthHeaders()),
     ]);
-    
-    const stats = statsResponse.data.success ? statsResponse.data.stats : {
-      moodAverage: 0,
-      energyLevel: 0,
-      stressLevel: 0,
-      totalEntries: 0,
-      totalAssessments: 0
-    };
-    
-    const recentMoods = moodEntriesResponse.data.success ? 
-      formatRecentMoods(moodEntriesResponse.data.moodEntries) : [];
-    
-    const assessments = assessmentsResponse.data.success ? 
-      assessmentsResponse.data.assessments.slice(0, 5) : [];
-    
+
+    const stats = statsResponse.data.success
+      ? statsResponse.data.stats
+      : {
+          moodAverage: 0,
+          energyLevel: 0,
+          stressLevel: 0,
+          totalEntries: 0,
+          totalAssessments: 0,
+        };
+
+    const recentMoods = moodsResponse.data.success
+      ? formatRecentMoods(moodsResponse.data.moodEntries)
+      : [];
+
+    const assessments = assessmentsResponse.data.success
+      ? assessmentsResponse.data.assessments.slice(0, 5)
+      : [];
+
     return {
       ...stats,
       recentMoods,
-      assessmentHistory: formatAssessmentHistory(assessments)
+      assessmentHistory: formatAssessmentHistory(assessments),
     };
   } catch (error) {
-    console.error('Error calculating dashboard stats:', error);
+    console.error("Error calculating dashboard stats:", error);
     return {
       moodAverage: 0,
       energyLevel: 0,
@@ -160,82 +139,79 @@ export const calculateDashboardStats = async () => {
       totalEntries: 0,
       totalAssessments: 0,
       recentMoods: [],
-      assessmentHistory: []
+      assessmentHistory: [],
     };
   }
 };
 
-// Helper function to format mood entries for display
+// Helper to format mood entries for display
 const formatRecentMoods = (entries) => {
   const moodEmojis = {
-    1: '😢', 2: '😔', 3: '😐', 4: '🙂', 5: '😊',
-    6: '😄', 7: '😍', 8: '🤩', 9: '🎉', 10: '☀️'
+    1: "😢",
+    2: "😔",
+    3: "😐",
+    4: "🙂",
+    5: "😊",
+    6: "😄",
+    7: "😍",
+    8: "🤩",
+    9: "🎉",
+    10: "☀️",
   };
-  
-  return entries.map(entry => ({
+
+  return entries.map((entry) => ({
     id: entry.id,
     mood: `${entry.mood}/10`,
-    emoji: moodEmojis[entry.mood] || '😐',
+    emoji: moodEmojis[entry.mood] || "😐",
     energy: `${entry.energy}/10`,
     stress: `${entry.stress}/10`,
     date: entry.date,
     time: entry.time,
-    description: entry.description || 'No description'
+    description: entry.description || "No description",
   }));
 };
 
-// Helper function to format assessment history
+// Helper to format assessment history
 const formatAssessmentHistory = (assessments) => {
-  return assessments.map(assessment => ({
+  return assessments.map((assessment) => ({
     type: getAssessmentDisplayName(assessment.type),
     date: assessment.date,
-    status: assessment.status
+    status: assessment.status,
   }));
 };
 
-// Helper function to get display names for assessments
+// Map assessment type → display name
 const getAssessmentDisplayName = (type) => {
   const displayNames = {
-    'big_five_personality': 'Big Five Assessment',
-    'depression_screening': 'Depression Screening',
-    'anxiety_screening': 'Anxiety Assessment',
-    'stress_evaluation': 'Stress Evaluation'
+    big_five_personality: "Big Five Assessment",
+    depression_screening: "Depression Screening",
+    anxiety_screening: "Anxiety Assessment",
+    stress_evaluation: "Stress Evaluation",
   };
   return displayNames[type] || type;
 };
 
-// User History Functions
+// =============== User Data Functions ===============
+
 export const getUserHistory = async () => {
   try {
-    const response = await axios.get(
-      `${API_URL}/user/history`,
-      getAuthHeaders()
-    );
-    
+    const response = await api.get("/api/user/history", getAuthHeaders());
     if (response.data.success) {
       return response.data.history;
     }
     return null;
   } catch (error) {
-    console.error('Error getting user history:', error);
+    console.error("Error getting user history:", error);
     return null;
   }
 };
 
-// Utility Functions
 export const clearAllData = async () => {
   try {
-    const response = await axios.delete(
-      `${API_URL}/user/data`,
-      getAuthHeaders()
-    );
-    
-    if (response.data.success) {
-      return true;
-    }
-    return false;
+    const response = await api.delete("/api/user/data", getAuthHeaders());
+    return response.data.success || false;
   } catch (error) {
-    console.error('Error clearing data:', error);
+    console.error("Error clearing data:", error);
     return false;
   }
 };
@@ -243,19 +219,18 @@ export const clearAllData = async () => {
 export const exportData = async () => {
   try {
     const history = await getUserHistory();
-    
     if (history) {
       const data = {
         moodEntries: history.moodEntries,
         assessments: history.assessments,
         userInfo: history.userInfo,
-        exportDate: new Date().toISOString()
+        exportDate: new Date().toISOString(),
       };
       return JSON.stringify(data, null, 2);
     }
     return null;
   } catch (error) {
-    console.error('Error exporting data:', error);
+    console.error("Error exporting data:", error);
     return null;
   }
 };
