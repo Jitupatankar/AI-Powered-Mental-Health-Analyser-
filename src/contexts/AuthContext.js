@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import axios from 'axios';
 
 const AuthContext = createContext();
+const API_URL = 'http://localhost:5000/api';
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -10,6 +12,20 @@ export const useAuth = () => {
   return context;
 };
 
+// Axios interceptor to add token to requests
+axios.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('psyche_compass_auth_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
@@ -17,17 +33,19 @@ export const AuthProvider = ({ children }) => {
 
   // Check if user is already logged in on app start
   useEffect(() => {
-    const checkAuthStatus = () => {
-      const savedUser = localStorage.getItem('psyche_compass_user');
+    const checkAuthStatus = async () => {
       const authToken = localStorage.getItem('psyche_compass_auth_token');
       
-      if (savedUser && authToken) {
+      if (authToken) {
         try {
-          const userData = JSON.parse(savedUser);
-          setUser(userData);
-          setIsAuthenticated(true);
+          // Verify token with backend
+          const response = await axios.get(`${API_URL}/auth/me`);
+          if (response.data.user) {
+            setUser(response.data.user);
+            setIsAuthenticated(true);
+          }
         } catch (error) {
-          console.error('Error parsing saved user data:', error);
+          console.error('Token verification failed:', error);
           logout();
         }
       }
@@ -37,107 +55,69 @@ export const AuthProvider = ({ children }) => {
     checkAuthStatus();
   }, []);
 
-  // Simple demo users for authentication
-  const demoUsers = [
-    {
-      id: 1,
-      email: 'demo@psychecompass.com',
-      password: 'demo123',
-      name: 'Demo User',
-      joinDate: '2025-01-01'
-    },
-    {
-      id: 2,
-      email: 'user@example.com',
-      password: 'password',
-      name: 'John Doe',
-      joinDate: '2025-01-15'
-    },
-    {
-      id: 3,
-      email: 'admin@psychecompass.com',
-      password: 'admin123',
-      name: 'Admin User',
-      joinDate: '2025-01-01'
-    }
-  ];
-
   const login = async (email, password) => {
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await axios.post(`${API_URL}/auth/login`, {
+        email,
+        password
+      });
 
-      // Find user in demo users
-      const foundUser = demoUsers.find(
-        user => user.email === email && user.password === password
-      );
-
-      if (foundUser) {
-        // Remove password from user object before storing
-        const { password: _, ...userWithoutPassword } = foundUser;
+      if (response.data.success) {
+        const { token, user } = response.data;
         
-        // Generate a simple auth token
-        const authToken = btoa(`${foundUser.id}-${Date.now()}`);
+        // Save token to localStorage
+        localStorage.setItem('psyche_compass_auth_token', token);
+        localStorage.setItem('psyche_compass_user', JSON.stringify(user));
         
-        // Save to localStorage
-        localStorage.setItem('psyche_compass_user', JSON.stringify(userWithoutPassword));
-        localStorage.setItem('psyche_compass_auth_token', authToken);
-        
-        setUser(userWithoutPassword);
+        setUser(user);
         setIsAuthenticated(true);
         
-        return { success: true, user: userWithoutPassword };
+        return { success: true, user };
       } else {
         return { 
           success: false, 
-          error: 'Invalid email or password. Try demo@psychecompass.com / demo123' 
+          error: response.data.error || 'Login failed'
         };
       }
     } catch (error) {
+      console.error('Login error:', error);
       return { 
         success: false, 
-        error: 'Login failed. Please try again.' 
+        error: error.response?.data?.error || 'Login failed. Please check your connection and try again.'
       };
     }
   };
 
   const register = async (name, email, password) => {
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Check if user already exists
-      const existingUser = demoUsers.find(user => user.email === email);
-      if (existingUser) {
-        return { 
-          success: false, 
-          error: 'User with this email already exists' 
-        };
-      }
-
-      // Create new user
-      const newUser = {
-        id: Date.now(),
+      const response = await axios.post(`${API_URL}/auth/register`, {
         name,
         email,
-        joinDate: new Date().toISOString().split('T')[0]
-      };
+        password
+      });
 
-      // Generate auth token
-      const authToken = btoa(`${newUser.id}-${Date.now()}`);
-
-      // Save to localStorage
-      localStorage.setItem('psyche_compass_user', JSON.stringify(newUser));
-      localStorage.setItem('psyche_compass_auth_token', authToken);
-
-      setUser(newUser);
-      setIsAuthenticated(true);
-
-      return { success: true, user: newUser };
+      if (response.data.success) {
+        const { token, user } = response.data;
+        
+        // Save token to localStorage
+        localStorage.setItem('psyche_compass_auth_token', token);
+        localStorage.setItem('psyche_compass_user', JSON.stringify(user));
+        
+        setUser(user);
+        setIsAuthenticated(true);
+        
+        return { success: true, user };
+      } else {
+        return { 
+          success: false, 
+          error: response.data.error || 'Registration failed'
+        };
+      }
     } catch (error) {
+      console.error('Registration error:', error);
       return { 
         success: false, 
-        error: 'Registration failed. Please try again.' 
+        error: error.response?.data?.error || 'Registration failed. Please try again.'
       };
     }
   };

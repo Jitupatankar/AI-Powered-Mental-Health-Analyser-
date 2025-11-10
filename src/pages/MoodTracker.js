@@ -15,9 +15,18 @@ const MoodTracker = () => {
   const [recentEntries, setRecentEntries] = useState([]);
 
   useEffect(() => {
-    // Load recent entries from storage
-    const entries = getRecentMoodEntries(3);
-    setRecentEntries(entries);
+    // Load recent entries from API
+    const loadRecentEntries = async () => {
+      try {
+        const entries = await getRecentMoodEntries(3);
+        setRecentEntries(entries || []);
+      } catch (error) {
+        console.error('Error loading recent entries:', error);
+        setRecentEntries([]);
+      }
+    };
+    
+    loadRecentEntries();
   }, []);
 
   const moodOptions = [
@@ -67,14 +76,19 @@ const MoodTracker = () => {
     'Celebrate positive trends'
   ];
 
-  const handleSave = () => {
-    // Save mood entry to localStorage
-    const savedEntry = saveMoodEntry(moodData);
-    if (savedEntry) {
-      console.log('Mood entry saved:', savedEntry);
-      alert('Mood entry saved successfully!');
-      navigate('/dashboard');
-    } else {
+  const handleSave = async () => {
+    // Save mood entry to database
+    try {
+      const savedEntry = await saveMoodEntry(moodData);
+      if (savedEntry) {
+        console.log('Mood entry saved:', savedEntry);
+        alert('Mood entry saved successfully!');
+        navigate('/dashboard');
+      } else {
+        alert('Error saving mood entry. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error saving mood entry:', error);
       alert('Error saving mood entry. Please try again.');
     }
   };

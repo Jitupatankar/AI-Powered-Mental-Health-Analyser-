@@ -16,11 +16,19 @@ const Dashboard = () => {
   });
 
   useEffect(() => {
-    // Load real data from localStorage
-    const stats = calculateDashboardStats();
-    if (stats.totalEntries > 0 || stats.assessmentHistory.length > 0) {
-      setDashboardData(stats);
-    }
+    // Load real data from API
+    const loadDashboardData = async () => {
+      try {
+        const stats = await calculateDashboardStats();
+        if (stats.totalEntries > 0 || stats.assessmentHistory.length > 0) {
+          setDashboardData(stats);
+        }
+      } catch (error) {
+        console.error('Error loading dashboard data:', error);
+      }
+    };
+    
+    loadDashboardData();
   }, []);
 
   const quickActions = [

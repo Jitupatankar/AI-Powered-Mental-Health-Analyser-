@@ -10,6 +10,7 @@ import PersonalityAssessment from './pages/PersonalityAssessment';
 import MoodTracker from './pages/MoodTracker';
 import MentalHealthScreening from './pages/MentalHealthScreening';
 import DepressionScreening from './pages/DepressionScreening';
+import DepressionResults from './pages/DepressionResults';
 import AnxietyScreening from './pages/AnxietyScreening';
 import StressScreening from './pages/StressScreening';
 
@@ -47,6 +48,11 @@ function App() {
             <Route path="/screening/depression" element={
               <ProtectedRoute>
                 <DepressionScreening />
+              </ProtectedRoute>
+            } />
+            <Route path="/screening/depression/results" element={
+              <ProtectedRoute>
+                <DepressionResults />
               </ProtectedRoute>
             } />
             <Route path="/screening/anxiety" element={

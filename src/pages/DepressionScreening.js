@@ -91,28 +91,27 @@ const DepressionScreening = () => {
     return { level: "Severe", color: "#991b1b", recommendation: "Your responses suggest severe depression symptoms. Please seek immediate help from a mental health professional or healthcare provider." };
   };
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     const score = calculateScore();
     const interpretation = getScoreInterpretation(score);
     
     // Check for suicidal ideation (question 9)
     const suicidalThoughts = responses[9] > 0;
     
-    // Save assessment to storage
-    const savedAssessment = saveAssessment('depression_screening', responses, { score, interpretation, suicidalThoughts });
+    // Save assessment to database
+    try {
+      const savedAssessment = await saveAssessment('depression_screening', responses, { score, interpretation, suicidalThoughts });
     
-    console.log('Depression screening completed:', { responses, score, interpretation, suicidalThoughts, savedAssessment });
-    
-    let message = `Depression Screening Results:\n\nTotal Score: ${score}/27\nSeverity Level: ${interpretation.level}\n\n${interpretation.recommendation}`;
-    
-    if (suicidalThoughts) {
-      message += "\n\n🚨 IMPORTANT: You indicated thoughts of self-harm. Please reach out for immediate support:\n• National Crisis Text Line: Text HOME to 741741\n• National Suicide Prevention Lifeline: 988\n• Emergency Services: 911";
+      console.log('Depression screening completed:', { responses, score, interpretation, suicidalThoughts, savedAssessment });
+      
+      // Navigate to results page with state
+      navigate('/screening/depression/results', {
+        state: { score, interpretation, suicidalThoughts, responses }
+      });
+    } catch (error) {
+      console.error('Error saving assessment:', error);
+      alert('Error saving assessment. Please try again.');
     }
-    
-    message += "\n\nRemember: This is a screening tool, not a diagnosis. Please consult with a qualified mental health professional for proper evaluation.";
-    
-    alert(message);
-    navigate('/dashboard');
   };
 
   const progress = ((currentQuestion + 1) / questions.length) * 100;

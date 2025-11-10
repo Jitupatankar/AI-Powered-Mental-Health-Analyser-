@@ -107,19 +107,24 @@ const StressScreening = () => {
     };
   };
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     const score = calculateScore();
     const interpretation = getScoreInterpretation(score);
     
-    // Save assessment to storage
-    const savedAssessment = saveAssessment('stress_evaluation', responses, { score, interpretation });
-    
-    console.log('Stress screening completed:', { responses, score, interpretation, savedAssessment });
-    
-    const message = `Stress Evaluation Results:\n\nTotal Score: ${score}/32\nStress Level: ${interpretation.level}\n\n${interpretation.recommendation}\n\nRemember: This is a screening tool, not a diagnosis. If you're experiencing significant stress that interferes with your daily life, consider speaking with a healthcare professional.`;
-    
-    alert(message);
-    navigate('/dashboard');
+    // Save assessment to database
+    try {
+      const savedAssessment = await saveAssessment('stress_evaluation', responses, { score, interpretation });
+      
+      console.log('Stress screening completed:', { responses, score, interpretation, savedAssessment });
+      
+      const message = `Stress Evaluation Results:\n\nTotal Score: ${score}/32\nStress Level: ${interpretation.level}\n\n${interpretation.recommendation}\n\nRemember: This is a screening tool, not a diagnosis. If you're experiencing significant stress that interferes with your daily life, consider speaking with a healthcare professional.`;
+      
+      alert(message);
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Error saving assessment:', error);
+      alert('Error saving assessment. Please try again.');
+    }
   };
 
   const progress = ((currentQuestion + 1) / questions.length) * 100;

@@ -1,123 +1,168 @@
-// Simple data storage utility using localStorage for now
-// In a real application, this would connect to a backend API
+// Data storage utility using API calls to backend
+import axios from 'axios';
 
-const STORAGE_KEYS = {
-  MOOD_ENTRIES: 'psyche_compass_mood_entries',
-  ASSESSMENTS: 'psyche_compass_assessments',
-  USER_PROFILE: 'psyche_compass_user_profile'
+const API_URL = 'http://localhost:5000/api';
+
+// Helper function to get auth token
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('psyche_compass_auth_token');
+  return {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  };
 };
 
 // Mood Entry Functions
-export const saveMoodEntry = (moodData) => {
+export const saveMoodEntry = async (moodData) => {
   try {
-    const existingEntries = getMoodEntries();
-    const newEntry = {
-      id: Date.now(),
-      ...moodData,
-      timestamp: new Date().toISOString(),
-      date: new Date().toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' }),
-      time: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
-    };
+    const response = await axios.post(
+      `${API_URL}/mood`,
+      moodData,
+      getAuthHeaders()
+    );
     
-    const updatedEntries = [newEntry, ...existingEntries];
-    localStorage.setItem(STORAGE_KEYS.MOOD_ENTRIES, JSON.stringify(updatedEntries));
-    return newEntry;
+    if (response.data.success) {
+      return response.data.moodEntry;
+    }
+    return null;
   } catch (error) {
     console.error('Error saving mood entry:', error);
     return null;
   }
 };
 
-export const getMoodEntries = () => {
+export const getMoodEntries = async () => {
   try {
-    const entries = localStorage.getItem(STORAGE_KEYS.MOOD_ENTRIES);
-    return entries ? JSON.parse(entries) : [];
+    const response = await axios.get(
+      `${API_URL}/mood`,
+      getAuthHeaders()
+    );
+    
+    if (response.data.success) {
+      return response.data.moodEntries;
+    }
+    return [];
   } catch (error) {
     console.error('Error getting mood entries:', error);
     return [];
   }
 };
 
-export const getRecentMoodEntries = (limit = 5) => {
-  const entries = getMoodEntries();
-  return entries.slice(0, limit);
+export const getRecentMoodEntries = async (limit = 5) => {
+  try {
+    const response = await axios.get(
+      `${API_URL}/mood/recent/${limit}`,
+      getAuthHeaders()
+    );
+    
+    if (response.data.success) {
+      return response.data.moodEntries;
+    }
+    return [];
+  } catch (error) {
+    console.error('Error getting recent mood entries:', error);
+    return [];
+  }
 };
 
 // Assessment Functions
-export const saveAssessment = (assessmentType, responses, scores = null) => {
+export const saveAssessment = async (assessmentType, responses, scores = null) => {
   try {
-    const existingAssessments = getAssessments();
-    const newAssessment = {
-      id: Date.now(),
-      type: assessmentType,
-      responses,
-      scores,
-      timestamp: new Date().toISOString(),
-      date: new Date().toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' }),
-      status: 'Completed'
-    };
+    const response = await axios.post(
+      `${API_URL}/assessment`,
+      {
+        type: assessmentType,
+        responses,
+        scores
+      },
+      getAuthHeaders()
+    );
     
-    const updatedAssessments = [newAssessment, ...existingAssessments];
-    localStorage.setItem(STORAGE_KEYS.ASSESSMENTS, JSON.stringify(updatedAssessments));
-    return newAssessment;
+    if (response.data.success) {
+      return response.data.assessment;
+    }
+    return null;
   } catch (error) {
     console.error('Error saving assessment:', error);
     return null;
   }
 };
 
-export const getAssessments = () => {
+export const getAssessments = async () => {
   try {
-    const assessments = localStorage.getItem(STORAGE_KEYS.ASSESSMENTS);
-    return assessments ? JSON.parse(assessments) : [];
+    const response = await axios.get(
+      `${API_URL}/assessment`,
+      getAuthHeaders()
+    );
+    
+    if (response.data.success) {
+      return response.data.assessments;
+    }
+    return [];
   } catch (error) {
     console.error('Error getting assessments:', error);
     return [];
   }
 };
 
-export const getAssessmentsByType = (type) => {
-  const assessments = getAssessments();
-  return assessments.filter(assessment => assessment.type === type);
+export const getAssessmentsByType = async (type) => {
+  try {
+    const response = await axios.get(
+      `${API_URL}/assessment/type/${type}`,
+      getAuthHeaders()
+    );
+    
+    if (response.data.success) {
+      return response.data.assessments;
+    }
+    return [];
+  } catch (error) {
+    console.error('Error getting assessments by type:', error);
+    return [];
+  }
 };
 
 // Dashboard Statistics Functions
-export const calculateDashboardStats = () => {
-  const moodEntries = getMoodEntries();
-  const assessments = getAssessments();
-  
-  // Calculate 7-day averages
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-  
-  const recentEntries = moodEntries.filter(entry => 
-    new Date(entry.timestamp) >= sevenDaysAgo
-  );
-  
-  const stats = {
-    moodAverage: 0,
-    energyLevel: 0,
-    stressLevel: 0,
-    totalEntries: moodEntries.length
-  };
-  
-  if (recentEntries.length > 0) {
-    const totals = recentEntries.reduce((acc, entry) => ({
-      mood: acc.mood + entry.mood,
-      energy: acc.energy + entry.energy,
-      stress: acc.stress + entry.stress
-    }), { mood: 0, energy: 0, stress: 0 });
+export const calculateDashboardStats = async () => {
+  try {
+    const [statsResponse, moodEntriesResponse, assessmentsResponse] = await Promise.all([
+      axios.get(`${API_URL}/user/stats`, getAuthHeaders()),
+      axios.get(`${API_URL}/mood/recent/3`, getAuthHeaders()),
+      axios.get(`${API_URL}/assessment`, getAuthHeaders())
+    ]);
     
-    stats.moodAverage = +(totals.mood / recentEntries.length).toFixed(1);
-    stats.energyLevel = +(totals.energy / recentEntries.length).toFixed(1);
-    stats.stressLevel = +(totals.stress / recentEntries.length).toFixed(1);
+    const stats = statsResponse.data.success ? statsResponse.data.stats : {
+      moodAverage: 0,
+      energyLevel: 0,
+      stressLevel: 0,
+      totalEntries: 0,
+      totalAssessments: 0
+    };
+    
+    const recentMoods = moodEntriesResponse.data.success ? 
+      formatRecentMoods(moodEntriesResponse.data.moodEntries) : [];
+    
+    const assessments = assessmentsResponse.data.success ? 
+      assessmentsResponse.data.assessments.slice(0, 5) : [];
+    
+    return {
+      ...stats,
+      recentMoods,
+      assessmentHistory: formatAssessmentHistory(assessments)
+    };
+  } catch (error) {
+    console.error('Error calculating dashboard stats:', error);
+    return {
+      moodAverage: 0,
+      energyLevel: 0,
+      stressLevel: 0,
+      totalEntries: 0,
+      totalAssessments: 0,
+      recentMoods: [],
+      assessmentHistory: []
+    };
   }
-  
-  return {
-    ...stats,
-    recentMoods: formatRecentMoods(recentEntries.slice(0, 3)),
-    assessmentHistory: formatAssessmentHistory(assessments.slice(0, 5))
-  };
 };
 
 // Helper function to format mood entries for display
@@ -159,49 +204,56 @@ const getAssessmentDisplayName = (type) => {
   return displayNames[type] || type;
 };
 
-// User Profile Functions (for future use)
-export const saveUserProfile = (profileData) => {
+// User History Functions
+export const getUserHistory = async () => {
   try {
-    localStorage.setItem(STORAGE_KEYS.USER_PROFILE, JSON.stringify(profileData));
-    return profileData;
-  } catch (error) {
-    console.error('Error saving user profile:', error);
+    const response = await axios.get(
+      `${API_URL}/user/history`,
+      getAuthHeaders()
+    );
+    
+    if (response.data.success) {
+      return response.data.history;
+    }
     return null;
-  }
-};
-
-export const getUserProfile = () => {
-  try {
-    const profile = localStorage.getItem(STORAGE_KEYS.USER_PROFILE);
-    return profile ? JSON.parse(profile) : null;
   } catch (error) {
-    console.error('Error getting user profile:', error);
+    console.error('Error getting user history:', error);
     return null;
   }
 };
 
 // Utility Functions
-export const clearAllData = () => {
+export const clearAllData = async () => {
   try {
-    Object.values(STORAGE_KEYS).forEach(key => {
-      localStorage.removeItem(key);
-    });
-    return true;
+    const response = await axios.delete(
+      `${API_URL}/user/data`,
+      getAuthHeaders()
+    );
+    
+    if (response.data.success) {
+      return true;
+    }
+    return false;
   } catch (error) {
     console.error('Error clearing data:', error);
     return false;
   }
 };
 
-export const exportData = () => {
+export const exportData = async () => {
   try {
-    const data = {
-      moodEntries: getMoodEntries(),
-      assessments: getAssessments(),
-      userProfile: getUserProfile(),
-      exportDate: new Date().toISOString()
-    };
-    return JSON.stringify(data, null, 2);
+    const history = await getUserHistory();
+    
+    if (history) {
+      const data = {
+        moodEntries: history.moodEntries,
+        assessments: history.assessments,
+        userInfo: history.userInfo,
+        exportDate: new Date().toISOString()
+      };
+      return JSON.stringify(data, null, 2);
+    }
+    return null;
   } catch (error) {
     console.error('Error exporting data:', error);
     return null;

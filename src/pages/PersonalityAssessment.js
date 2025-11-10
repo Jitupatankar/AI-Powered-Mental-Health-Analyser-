@@ -130,16 +130,21 @@ const PersonalityAssessment = () => {
     }
   };
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     // Calculate Big Five scores
     const scores = calculateBigFiveScores();
     
-    // Save assessment to storage
-    const savedAssessment = saveAssessment('big_five_personality', responses, scores);
-    
-    console.log('Assessment completed:', { responses, scores, savedAssessment });
-    alert(`Assessment completed! Your personality profile has been calculated:\n\nExtraversion: ${scores.extraversion}\nAgreeableness: ${scores.agreeableness}\nConscientiousness: ${scores.conscientiousness}\nNeuroticism: ${scores.neuroticism}\nOpenness: ${scores.openness}`);
-    navigate('/dashboard');
+    // Save assessment to database
+    try {
+      const savedAssessment = await saveAssessment('big_five_personality', responses, scores);
+      
+      console.log('Assessment completed:', { responses, scores, savedAssessment });
+      alert(`Assessment completed! Your personality profile has been calculated:\n\nExtraversion: ${scores.extraversion}\nAgreeableness: ${scores.agreeableness}\nConscientiousness: ${scores.conscientiousness}\nNeuroticism: ${scores.neuroticism}\nOpenness: ${scores.openness}`);
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Error saving assessment:', error);
+      alert('Error saving assessment. Please try again.');
+    }
   };
 
   const calculateBigFiveScores = () => {

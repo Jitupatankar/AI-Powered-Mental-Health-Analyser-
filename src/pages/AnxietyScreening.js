@@ -82,19 +82,24 @@ const AnxietyScreening = () => {
     return { level: "Severe", color: "#dc2626", recommendation: "Your responses suggest severe anxiety symptoms. We recommend consulting with a mental health professional." };
   };
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     const score = calculateScore();
     const interpretation = getScoreInterpretation(score);
     
-    // Save assessment to storage
-    const savedAssessment = saveAssessment('anxiety_screening', responses, { score, interpretation });
-    
-    console.log('Anxiety screening completed:', { responses, score, interpretation, savedAssessment });
-    
-    const message = `Anxiety Screening Results:\n\nTotal Score: ${score}/21\nSeverity Level: ${interpretation.level}\n\n${interpretation.recommendation}\n\nRemember: This is a screening tool, not a diagnosis. Please consult with a qualified mental health professional for proper evaluation.`;
-    
-    alert(message);
-    navigate('/dashboard');
+    // Save assessment to database
+    try {
+      const savedAssessment = await saveAssessment('anxiety_screening', responses, { score, interpretation });
+      
+      console.log('Anxiety screening completed:', { responses, score, interpretation, savedAssessment });
+      
+      const message = `Anxiety Screening Results:\n\nTotal Score: ${score}/21\nSeverity Level: ${interpretation.level}\n\n${interpretation.recommendation}\n\nRemember: This is a screening tool, not a diagnosis. Please consult with a qualified mental health professional for proper evaluation.`;
+      
+      alert(message);
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Error saving assessment:', error);
+      alert('Error saving assessment. Please try again.');
+    }
   };
 
   const progress = ((currentQuestion + 1) / questions.length) * 100;
