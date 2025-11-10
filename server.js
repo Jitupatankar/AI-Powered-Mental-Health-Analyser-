@@ -501,11 +501,6 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Something went wrong!' });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-  console.log(`API URL: http://localhost:${PORT}`);
-});
 
 // Serve frontend in production
 if (process.env.NODE_ENV === "production") {
@@ -514,3 +509,10 @@ if (process.env.NODE_ENV === "production") {
     res.sendFile(path.resolve(__dirname, "build", "index.html"));
   });
 }
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+  console.log(`API URL: http://localhost:${PORT}`);
+});
+
